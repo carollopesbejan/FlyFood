@@ -16,7 +16,7 @@ def save_matrix(rows, cols, matrix, path):
         f.write("\n".join(matrix_rows))
 
 def gerar_e_salvar_snapshots(n_max_letters, rows=4, cols=5):
-    base_dir = "matrices"
+    base_dir = "matrizes"
     total_slots = rows * cols
     alphabet = list(string.ascii_uppercase)
     
@@ -26,7 +26,7 @@ def gerar_e_salvar_snapshots(n_max_letters, rows=4, cols=5):
 
     for n in range(1, n_max_letters + 1):
         current_letters = alphabet[:n]
-        folder_name = f"{n}_element"
+        folder_name = f"{n}_ponto_entrega"
         
         for r_pos in range(total_slots):
             r_row, r_col = r_pos // cols, r_pos % cols
