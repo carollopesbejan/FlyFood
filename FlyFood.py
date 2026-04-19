@@ -1,9 +1,7 @@
 from itertools import permutations
 from pathlib import Path
 import os
-from datetime import datetime
-import dateutil.relativedelta
-
+import time
 
 def main():
     diretorios = os.listdir(f"{os.getcwd()}/matrizes")
@@ -16,7 +14,7 @@ def main():
             arquivo.close()
             print("Arquivo:", nome_arquivo)
 
-            inicio = datetime.now()
+            inicio = time.time()
             linhas, colunas = map(int, linhas_raw[0].split())
             matriz = [linha.split() for linha in linhas_raw[1:]]
 
@@ -48,11 +46,10 @@ def main():
 
             caminho_str = ' '.join(melhor_rota[1:-1])
 
-            fim = datetime.now()
+            fim = time.time()
             print(f"Melhor rota: {caminho_str}")
             print(f"Menor distância: {menor_distancia}")
-            rd = dateutil.relativedelta.relativedelta(fim, inicio)
-            print("Tempo de processamento:", f"{rd.minutes}:{rd.seconds}.{rd.microseconds}")
+            print("Tempo de processamento:", f"{fim - inicio} segundos")
             print()
 
 if __name__ == "__main__":
