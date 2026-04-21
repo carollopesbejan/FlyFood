@@ -7,7 +7,7 @@ def main():
     diretorios = os.listdir(f"{os.getcwd()}/matrizes")
 
     for diretorio in diretorios:
-        nome_arquivos = nome_arquivos = list(Path(f"{os.getcwd()}/matrizes/{diretorio}").rglob("*.txt"))
+        nome_arquivos = list(Path(f"{os.getcwd()}/matrizes/{diretorio}").rglob("*.txt"))
         for nome_arquivo in nome_arquivos:
             arquivo = open(nome_arquivo, 'r')
             linhas_raw = arquivo.readlines()
@@ -15,7 +15,6 @@ def main():
             print("Arquivo:", nome_arquivo)
 
             inicio = time.time()
-            linhas, colunas = map(int, linhas_raw[0].split())
             matriz = [linha.split() for linha in linhas_raw[1:]]
 
             pontos = []
