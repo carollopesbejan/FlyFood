@@ -2,7 +2,7 @@
 
 def main():
     dicDistancias = ler_arquivo()
-    populacao = inicializaPopulacao(3, 4)
+    populacao = inicializaPopulacao(100, 58)
 
 def ler_arquivo():
     objArq = open("edgesbrasil58.tsp")
