@@ -1,4 +1,4 @@
-import random
+from deap import tools
 
 def dois_menores(populacao, aptidao):
     # Inicializa os dois menores valores com infinito positivo e suas permutações como None
@@ -28,7 +28,7 @@ def main():
     populacao = inicializaPopulacao(100, 58)
 
     aptidao = calculaAptidao(populacao, dicDistancias)
-    # print(aptidao)
+    print(aptidao)
 
     menores = dois_menores(populacao, aptidao)
     print(menores)
@@ -48,39 +48,16 @@ def mutacao(permutacao):
     pass
 
 def cruzamento(pai1, pai2):
-    n = len(pai1)
+    filho1 = [cidade - 1 for cidade in pai1]
+    filho2 = [cidade - 1 for cidade in pai2]
 
-    def criar_filho(p1, p2):
-        # Escolhe dois pontos de corte aleatórios e distintos
-        corte1, corte2 = sorted(random.sample(range(n), 2))
+    # Aplica o cruzamento ordenado da DEAP
+    tools.cxOrdered(filho1, filho2)
 
-        # Inicializa o filho preenchido com None
-        filho = [None] * n
-
-        # Copia o segmento do primeiro pai para o filho
-        filho[corte1:corte2] = p1[corte1:corte2]
-
-        # Conjunto para busca rápida O(1) de elementos já copiados
-        elementos_copiados = set(filho[corte1:corte2])
-
-        # Posições a serem preenchidas no filho (daqui até o fim, e depois do início até o corte)
-        posicoes_vazias = list(range(corte2, n)) + list(range(0, corte1))
-
-        # Sequência circular de cidades tiradas do segundo pai
-        cidades_p2 = p2[corte2:] + p2[:corte2]
-
-        idx_vazio = 0
-        for cidade in cidades_p2:
-            if cidade not in elementos_copiados:
-                filho[posicoes_vazias[idx_vazio]] = cidade
-                idx_vazio += 1
-                if idx_vazio == len(posicoes_vazias):
-                    break
-        return filho
-
-    # Gera os dois filhos cruzando as referências dos pais
-    filho1 = criar_filho(pai1, pai2)
-    filho2 = criar_filho(pai2, pai1)
+    # Somamos 1 de volta para retornar à base original (1 a 58)
+    # mantendo a compatibilidade com o dicionário de distâncias.
+    filho1 = [cidade + 1 for cidade in filho1]
+    filho2 = [cidade + 1 for cidade in filho2]
 
     return filho1, filho2
 
