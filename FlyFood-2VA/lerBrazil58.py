@@ -1,4 +1,4 @@
-# from file import *
+import random
 
 def dois_menores(populacao, aptidao):
     # Inicializa os dois menores valores com infinito positivo e suas permutações como None
@@ -32,6 +32,57 @@ def main():
 
     menores = dois_menores(populacao, aptidao)
     print(menores)
+
+    # Separa os dois melhores indivíduos para serem os pais
+    pai1 = menores[0][1]
+    pai2 = menores[1][1]
+    print("Pai 1 gerado:\t", pai1)
+    print("Pai 2 gerado:\t", pai2)
+
+    # Realiza o cruzamento Order-1
+    filho1, filho2 = cruzamento(pai1, pai2)
+    print("Filho 1 gerado:\t", filho1)
+    print("Filho 2 gerado:\t", filho2)
+
+def mutacao(permutacao):
+    pass
+
+def cruzamento(pai1, pai2):
+    n = len(pai1)
+
+    def criar_filho(p1, p2):
+        # Escolhe dois pontos de corte aleatórios e distintos
+        corte1, corte2 = sorted(random.sample(range(n), 2))
+
+        # Inicializa o filho preenchido com None
+        filho = [None] * n
+
+        # Copia o segmento do primeiro pai para o filho
+        filho[corte1:corte2] = p1[corte1:corte2]
+
+        # Conjunto para busca rápida O(1) de elementos já copiados
+        elementos_copiados = set(filho[corte1:corte2])
+
+        # Posições a serem preenchidas no filho (daqui até o fim, e depois do início até o corte)
+        posicoes_vazias = list(range(corte2, n)) + list(range(0, corte1))
+
+        # Sequência circular de cidades tiradas do segundo pai
+        cidades_p2 = p2[corte2:] + p2[:corte2]
+
+        idx_vazio = 0
+        for cidade in cidades_p2:
+            if cidade not in elementos_copiados:
+                filho[posicoes_vazias[idx_vazio]] = cidade
+                idx_vazio += 1
+                if idx_vazio == len(posicoes_vazias):
+                    break
+        return filho
+
+    # Gera os dois filhos cruzando as referências dos pais
+    filho1 = criar_filho(pai1, pai2)
+    filho2 = criar_filho(pai2, pai1)
+
+    return filho1, filho2
 
 def ler_arquivo():
     objArq = open("edgesbrasil58.tsp")
