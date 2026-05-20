@@ -1,8 +1,37 @@
 # from file import *
 
+def dois_menores(populacao, aptidao):
+    # Inicializa os dois menores valores com infinito positivo e suas permutações como None
+    menor_val = segundo_menor_val = float('inf')
+    menor_perm = segundo_menor_perm = None
+
+    # Percorre a população e a aptidão em paralelo
+    for perm, val in zip(populacao, aptidao):
+        if val < menor_val:
+            # O antigo menor passa a ser o segundo menor
+            segundo_menor_val = menor_val
+            segundo_menor_perm = menor_perm
+
+            # Atualiza o novo menor
+            menor_val = val
+            menor_perm = perm
+        elif val < segundo_menor_val:
+            # O número é maior que o menor, mas menor que o segundo_menor
+            segundo_menor_val = val
+            segundo_menor_perm = perm
+
+    # Retorna uma tupla contendo as duas tuplas estruturadas (valor, permutação)
+    return ((menor_val, menor_perm), (segundo_menor_val, segundo_menor_perm))
+
 def main():
     dicDistancias = ler_arquivo()
     populacao = inicializaPopulacao(100, 58)
+
+    aptidao = calculaAptidao(populacao, dicDistancias)
+    # print(aptidao)
+
+    menores = dois_menores(populacao, aptidao)
+    print(menores)
 
 def ler_arquivo():
     objArq = open("edgesbrasil58.tsp")
@@ -57,7 +86,6 @@ def inicializaPopulacao(tamanho, qtdeCidades):
         individuo = list(range(1, qtdeCidades + 1))
         random.shuffle(individuo)
         lista.append(individuo)
-    print(lista)
     return lista
 
 def calculaAptidao(populacao, dicDistancias):
