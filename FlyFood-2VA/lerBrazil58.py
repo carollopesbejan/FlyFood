@@ -1,4 +1,5 @@
 from deap import tools
+import random
 
 def dois_menores(populacao, aptidao):
     # Inicializa os dois menores valores com infinito positivo e suas permutações como None
@@ -41,11 +42,26 @@ def main():
 
     # Realiza o cruzamento Order-1
     filho1, filho2 = cruzamento(pai1, pai2)
+
+    filho1 = mutacao(filho1, taxa_mutacao=0.05)
+    filho2 = mutacao(filho2, taxa_mutacao=0.05)
     print("Filho 1 gerado:\t", filho1)
     print("Filho 2 gerado:\t", filho2)
 
-def mutacao(permutacao):
-    pass
+def mutacao(permutacao, taxa_mutacao):
+    """
+    Mutação por Inversão (Inverse Mutation):
+    Escolhe dois pontos e inverte o segmento entre eles.
+    """
+    if random.random() < taxa_mutacao:
+        n = len(permutacao)
+        # Sorteia dois índices únicos e os ordena
+        idx1, idx2 = sorted(random.sample(range(n), 2))
+
+        # Inverte o pedaço selecionado na própria lista
+        permutacao[idx1:idx2] = reversed(permutacao[idx1:idx2])
+
+    return permutacao
 
 def cruzamento(pai1, pai2):
     filho1 = [cidade - 1 for cidade in pai1]
