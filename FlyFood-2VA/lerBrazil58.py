@@ -1,38 +1,62 @@
 from deap import tools
 import random
 
-def dois_menores(populacao, aptidao):
-    # Inicializa os dois menores valores com infinito positivo e suas permutações como None
-    menor_val = segundo_menor_val = float('inf')
-    menor_perm = segundo_menor_perm = None
+class Populacao:
+    def __init__(self, tamanho, qtde_cidades):
+        self.tamanho = tamanho
+        self.qtde_cidades = qtde_cidades
+        self.individuos = [] #lista de rotas
+        self.aptidoes = [] #lista de custos/aptidões
+        self.inicializar()
 
-    # Percorre a população e a aptidão em paralelo
-    for perm, val in zip(populacao, aptidao):
-        if val < menor_val:
-            # O antigo menor passa a ser o segundo menor
-            segundo_menor_val = menor_val
-            segundo_menor_perm = menor_perm
+    def inicializar(self):
+        """Cria as permutações aleatórias iniciais."""
+        self.individuos = []
+        for _ in range(self.tamanho):
+            individuo = list(range(1, self.qtde_cidades + 1))
+            random.shuffle(individuo)
+            self.individuos.append(individuo)
 
-            # Atualiza o novo menor
-            menor_val = val
-            menor_perm = perm
-        elif val < segundo_menor_val:
-            # O número é maior que o menor, mas menor que o segundo_menor
-            segundo_menor_val = val
-            segundo_menor_perm = perm
+    def avaliar(self, dicDistancias):
+        """Calcula e armazena a aptidão de todos os indivíduos."""
+        self.aptidoes = []
+        for individuo in self.individuos:
+            self.aptidoes.append(custoCaminho(individuo, dicDistancias))
+        return self.aptidoes
 
-    # Retorna uma tupla contendo as duas tuplas estruturadas (valor, permutação)
-    return ((menor_val, menor_perm), (segundo_menor_val, segundo_menor_perm))
+    def obter_dois_melhores(self):
+        """Retorna as duas melhores tuplas (aptidao, individuo)."""
+        menor_val = segundo_menor_val = float('inf')
+        menor_perm = segundo_menor_perm = None
+
+        # Percorre a população e a aptidão internamente em paralelo
+        for perm, val in zip(self.individuos, self.aptidoes):
+            if val < menor_val:
+                segundo_menor_val = menor_val
+                segundo_menor_perm = menor_perm
+
+                menor_val = val
+                menor_perm = perm
+            elif val < segundo_menor_val:
+                segundo_menor_val = val
+                segundo_menor_perm = perm
+
+        return ((menor_val, menor_perm), (segundo_menor_val, segundo_menor_perm))
+
 
 def main():
     dicDistancias = ler_arquivo()
-    populacao = inicializaPopulacao(100, 58)
+    
+    # Instanciando a população como um objeto
+    populacao = Populacao(tamanho=100, qtde_cidades=58)
 
-    aptidao = calculaAptidao(populacao, dicDistancias)
-    print(aptidao)
+    # Avaliando a população
+    aptidao = populacao.avaliar(dicDistancias)
+    print("Aptidões:", aptidao)
 
-    menores = dois_menores(populacao, aptidao)
-    print(menores)
+    # Obtendo os dois melhores (pais) usando o método da classe
+    menores = populacao.obter_dois_melhores()
+    print("Menores:", menores)
 
     # Separa os dois melhores indivíduos para serem os pais
     pai1 = menores[0][1]
@@ -43,10 +67,12 @@ def main():
     # Realiza o cruzamento Order-1
     filho1, filho2 = cruzamento(pai1, pai2)
 
+    # Realiza a mutação
     filho1 = mutacao(filho1, taxa_mutacao=0.05)
     filho2 = mutacao(filho2, taxa_mutacao=0.05)
     print("Filho 1 gerado:\t", filho1)
     print("Filho 2 gerado:\t", filho2)
+
 
 def mutacao(permutacao, taxa_mutacao):
     """
@@ -55,13 +81,10 @@ def mutacao(permutacao, taxa_mutacao):
     """
     if random.random() < taxa_mutacao:
         n = len(permutacao)
-        # Sorteia dois índices únicos e os ordena
         idx1, idx2 = sorted(random.sample(range(n), 2))
-
-        # Inverte o pedaço selecionado na própria lista
         permutacao[idx1:idx2] = reversed(permutacao[idx1:idx2])
-
     return permutacao
+
 
 def cruzamento(pai1, pai2):
     filho1 = [cidade - 1 for cidade in pai1]
@@ -71,43 +94,35 @@ def cruzamento(pai1, pai2):
     tools.cxOrdered(filho1, filho2)
 
     # Somamos 1 de volta para retornar à base original (1 a 58)
-    # mantendo a compatibilidade com o dicionário de distâncias.
     filho1 = [cidade + 1 for cidade in filho1]
     filho2 = [cidade + 1 for cidade in filho2]
 
     return filho1, filho2
 
+
 def ler_arquivo():
-    objArq = open("edgesbrasil58.tsp")
-    # se você quiser uma lista onde cada objeto será uma string
-    # grande representando uma linha do arquivo:
-    # listaLinhas = objArq.readlines() #obs: cada linha terah um enter junto com o ultimo elemento
+    
+    with open("edgesbrasil58.tsp", "r") as objArq:
+        distancias = {}
 
-    distancias = {}
+        for i in range(1, 58): 
+            linha = objArq.readline()
+            lista = linha.split() 
 
-    for i in range(1, 58):  # linhas 1 a 57 pois a 58 nao terá aresta
-        linha = objArq.readline()  # le só uma linha do arquivo
-        # transformando a linha em lista de strings:
-        lista = linha.split()  # obs: lista de strings (não int)
-
-        for j in range(i + 1, 59):  # colunas i+1 a 58
-            if len(lista) > 0:
-                peso = int(
-                    lista.pop(0)
-                )  # obs: peso int, poderia ser float em outro problema
-            else:
-                print(f"Erro! linha {i} do arquivo não possui elementos suficientes")
-                exit()
-            # gravando a aresta em (i, j) e (j, i):
-            distancias[(i, j)] = peso
-            distancias[(j, i)] = peso
-    objArq.close()
-
+            for j in range(i + 1, 59):
+                if len(lista) > 0:
+                    peso = int(lista.pop(0)) 
+                else:
+                    print(f"Erro! linha {i} do arquivo não possui elementos suficientes")
+                    exit()
+                distancias[(i, j)] = peso
+                distancias[(j, i)] = peso
+                
     return distancias
 
-# funcao que retorna o custo total do caminho:
+
 def custoCaminho(permutacao, dicDistancias):
-    # ex: permutacao = [5, 14, 2, 3, 7, ...]
+    """Função que retorna o custo total do caminho."""
     soma = 0
     for i in range(len(permutacao) - 1):
         a = permutacao[i]
@@ -117,26 +132,11 @@ def custoCaminho(permutacao, dicDistancias):
         else:
             print(f"Erro! ({a},{b}) não existe no dicionario!")
             exit()
+            
+    # Fechando o ciclo (última cidade voltando para a primeira)
     soma += dicDistancias[(permutacao[-1], permutacao[0])]
     return soma
 
-
-def inicializaPopulacao(tamanho, qtdeCidades):
-    import random
-
-    # criando uma lista com "tamanho" permutacoes aleatorias de cidades:
-    lista = []
-    for i in range(tamanho):
-        individuo = list(range(1, qtdeCidades + 1))
-        random.shuffle(individuo)
-        lista.append(individuo)
-    return lista
-
-def calculaAptidao(populacao, dicDistancias):
-    listaAptidao = []
-    for elem in populacao:
-        listaAptidao.append(custoCaminho(elem, dicDistancias))
-    return listaAptidao
 
 if __name__ == "__main__":
     main()
