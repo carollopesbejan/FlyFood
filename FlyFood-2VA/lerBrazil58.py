@@ -60,24 +60,41 @@ def main():
     # Instanciando a população como um objeto
     populacao = Populacao(tamanho=100, qtde_cidades=58)
 
-    # Avaliando a população
-    aptidao = populacao.avaliar(dicDistancias)
-    print("Aptidões:", aptidao)
+    numero_geracoes = 1_000
+    taxa_mutacao = 0.05
 
-    # Seleciona os dois pais usando torneio binário
-    pai1, pai2 = populacao.selecionar_pais()
+    for geracao in range(numero_geracoes):
+        populacao.avaliar(dicDistancias)
 
-    print("Pai 1 gerado:\t", pai1)
-    print("Pai 2 gerado:\t", pai2)
+        # 2. ELITISMO: os 2 melhores sobrevivem intactos
+        melhores = populacao.obter_dois_melhores()
+        melhor_custo = melhores[0][0]
+        nova_geracao = [melhores[0][1], melhores[1][1]]
 
-    # Realiza o cruzamento Order-1
-    filho1, filho2 = cruzamento(pai1, pai2)
+        # 3. Preenche o resto com filhos dos pais selecionados por torneio
+        while len(nova_geracao) < populacao.tamanho:
+            pai1, pai2 = populacao.selecionar_pais()
 
-    # Realiza a mutação
-    filho1 = mutacao(filho1, taxa_mutacao=0.05)
-    filho2 = mutacao(filho2, taxa_mutacao=0.05)
-    print("Filho 1 gerado:\t", filho1)
-    print("Filho 2 gerado:\t", filho2)
+            # Realiza o cruzamento Order-1
+            filho1, filho2 = cruzamento(pai1, pai2)
+
+            # Realiza a mutação
+            filho1 = mutacao(filho1, taxa_mutacao)
+            filho2 = mutacao(filho2, taxa_mutacao)
+
+            nova_geracao.append(filho1)
+            if len(nova_geracao) < populacao.tamanho:
+                nova_geracao.append(filho2)
+
+        # 4. A nova geração SUBSTITUI a antiga
+        populacao.individuos = nova_geracao
+
+        print(f"Geração {geracao:4d} | Melhor custo: {melhor_custo}")
+
+    # Resultado final
+    populacao.avaliar(dicDistancias)
+    melhor_custo, melhor_rota = populacao.obter_dois_melhores()[0]
+    print(f"\nMelhor rota encontrada (custo {melhor_custo}): {melhor_rota}")
 
 
 def mutacao(permutacao, taxa_mutacao):
@@ -93,15 +110,16 @@ def mutacao(permutacao, taxa_mutacao):
 
 
 def cruzamento(pai1, pai2):
-    filho1 = [cidade - 1 for cidade in pai1]
-    filho2 = [cidade - 1 for cidade in pai2]
+    filho1 = creator.Individual(cidade - 1 for cidade in pai1)
+    filho2 = creator.Individual(cidade - 1 for cidade in pai2)
 
     # Aplica o cruzamento ordenado da DEAP
     tools.cxOrdered(filho1, filho2)
 
-    # Somamos 1 de volta para retornar à base original (1 a 58)
-    filho1 = [cidade + 1 for cidade in filho1]
-    filho2 = [cidade + 1 for cidade in filho2]
+    # Somamos 1 de volta para retornar à base original (1 a 58),
+    # mantendo o tipo creator.Individual (com atributo fitness)
+    filho1[:] = [cidade + 1 for cidade in filho1]
+    filho2[:] = [cidade + 1 for cidade in filho2]
 
     return filho1, filho2
 
