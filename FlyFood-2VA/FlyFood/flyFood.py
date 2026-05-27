@@ -124,7 +124,7 @@ def cruzamento(pai1, pai2):
     return filho1, filho2
 
 def ler_arquivo():
-    with open("FlyFood.tsp", "r") as objArq:
+    with open("edgesFlyFood.tsp", "r") as objArq:
         distancias = {}
 
         for i in range(1, 14):
