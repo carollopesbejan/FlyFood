@@ -7,9 +7,9 @@ class Populacao:
         self.qtde_cidades = qtde_cidades
         self.individuos = [] #lista de rotas
         self.aptidoes = [] #lista de custos/aptidões
-        self.inicializar()
+        self.popular_individuos()
 
-    def inicializar(self):
+    def popular_individuos(self):
         creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
         creator.create("Individual", list, fitness=creator.FitnessMin)
 
