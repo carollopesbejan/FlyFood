@@ -1,9 +1,6 @@
 from deap import base, creator, tools
 import random
 
-creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
-creator.create("Individual", list, fitness=creator.FitnessMin)
-
 class Populacao:
     def __init__(self, tamanho, qtde_cidades):
         self.tamanho = tamanho
@@ -13,7 +10,9 @@ class Populacao:
         self.inicializar()
 
     def inicializar(self):
-        """Cria as permutações aleatórias iniciais."""
+        creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+        creator.create("Individual", list, fitness=creator.FitnessMin)
+
         self.individuos = []
         for _ in range(self.tamanho):
             individuo = creator.Individual(range(1, self.qtde_cidades + 1))
@@ -29,8 +28,7 @@ class Populacao:
             self.aptidoes.append(custo)
         return self.aptidoes
 
-    def selecionar_pais(self):
-        """Seleciona dois pais usando torneio binário."""
+    def selecao_torneio_pais(self):
         return tools.selTournament(self.individuos, k=2, tournsize=2)
 
     def obter_dois_melhores(self):
@@ -52,12 +50,9 @@ class Populacao:
 
         return ((menor_val, menor_perm), (segundo_menor_val, segundo_menor_perm))
 
-
 def main():
     dicDistancias = ler_arquivo()
 
-    # Instanciando a população como um objeto
-    # 14 cidades: 13 pontos de entrega + a base R (origem)
     populacao = Populacao(tamanho=100, qtde_cidades=14)
 
     numero_geracoes = 1_000
@@ -66,42 +61,37 @@ def main():
     for geracao in range(numero_geracoes):
         populacao.avaliar(dicDistancias)
 
-        # 2. ELITISMO: os 2 melhores sobrevivem intactos
+        # Os 2 melhores sobrevivem permanecem via Elitismo
         melhores = populacao.obter_dois_melhores()
         melhor_custo = melhores[0][0]
         nova_geracao = [melhores[0][1], melhores[1][1]]
 
-        # 3. Preenche o resto com filhos dos pais selecionados por torneio
+        # Preenche o resto com filhos dos pais selecionados por torneio
         while len(nova_geracao) < populacao.tamanho:
-            pai1, pai2 = populacao.selecionar_pais()
+            pai1, pai2 = populacao.selecao_torneio_pais()
 
             # Realiza o cruzamento Order-1
-            filho1, filho2 = cruzamento(pai1, pai2)
+            filho1, filho2 = cruzamento_ordenado(pai1, pai2)
 
             # Realiza a mutação
-            filho1 = mutacao(filho1, taxa_mutacao)
-            filho2 = mutacao(filho2, taxa_mutacao)
+            filho1 = mutacao_inversao(filho1, taxa_mutacao)
+            filho2 = mutacao_inversao(filho2, taxa_mutacao)
 
             nova_geracao.append(filho1)
             if len(nova_geracao) < populacao.tamanho:
                 nova_geracao.append(filho2)
 
-        # 4. A nova geração SUBSTITUI a antiga
         populacao.individuos = nova_geracao
 
         print(f"Geração {geracao:4d} | Melhor custo: {melhor_custo}")
 
-    # Resultado final
     populacao.avaliar(dicDistancias)
     melhor_custo, melhor_rota = populacao.obter_dois_melhores()[0]
-    print(f"\nMelhor rota encontrada (custo {melhor_custo}): {melhor_rota}")
+    rota_letras = [chr(ord('A') + cidade - 1) for cidade in melhor_rota]
+    print(f"\nMelhor rota encontrada (custo {melhor_custo}): {rota_letras}")
 
 
-def mutacao(permutacao, taxa_mutacao):
-    """
-    Mutação por Inversão (Inverse Mutation):
-    Escolhe dois pontos e inverte o segmento entre eles.
-    """
+def mutacao_inversao(permutacao, taxa_mutacao):
     if random.random() < taxa_mutacao:
         n = len(permutacao)
         idx1, idx2 = sorted(random.sample(range(n), 2))
@@ -109,7 +99,7 @@ def mutacao(permutacao, taxa_mutacao):
     return permutacao
 
 
-def cruzamento(pai1, pai2):
+def cruzamento_ordenado(pai1, pai2):
     filho1 = creator.Individual(cidade - 1 for cidade in pai1)
     filho2 = creator.Individual(cidade - 1 for cidade in pai2)
 
