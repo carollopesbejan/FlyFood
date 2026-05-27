@@ -1,5 +1,9 @@
-from deap import tools
+from deap import base, creator, tools
 import random
+
+creator.create("FitnessMin", base.Fitness, weights=(-1.0,))
+creator.create("Individual", list, fitness=creator.FitnessMin)
+
 
 class Populacao:
     def __init__(self, tamanho, qtde_cidades):
@@ -13,7 +17,7 @@ class Populacao:
         """Cria as permutações aleatórias iniciais."""
         self.individuos = []
         for _ in range(self.tamanho):
-            individuo = list(range(1, self.qtde_cidades + 1))
+            individuo = creator.Individual(range(1, self.qtde_cidades + 1))
             random.shuffle(individuo)
             self.individuos.append(individuo)
 
@@ -21,8 +25,14 @@ class Populacao:
         """Calcula e armazena a aptidão de todos os indivíduos."""
         self.aptidoes = []
         for individuo in self.individuos:
-            self.aptidoes.append(custoCaminho(individuo, dicDistancias))
+            custo = custoCaminho(individuo, dicDistancias)
+            individuo.fitness.values = (custo,)
+            self.aptidoes.append(custo)
         return self.aptidoes
+
+    def selecionar_pais(self):
+        """Seleciona dois pais usando torneio binário."""
+        return tools.selTournament(self.individuos, k=2, tournsize=2)
 
     def obter_dois_melhores(self):
         """Retorna as duas melhores tuplas (aptidao, individuo)."""
@@ -46,7 +56,7 @@ class Populacao:
 
 def main():
     dicDistancias = ler_arquivo()
-    
+
     # Instanciando a população como um objeto
     populacao = Populacao(tamanho=100, qtde_cidades=58)
 
@@ -54,13 +64,9 @@ def main():
     aptidao = populacao.avaliar(dicDistancias)
     print("Aptidões:", aptidao)
 
-    # Obtendo os dois melhores (pais) usando o método da classe
-    menores = populacao.obter_dois_melhores()
-    print("Menores:", menores)
+    # Seleciona os dois pais usando torneio binário
+    pai1, pai2 = populacao.selecionar_pais()
 
-    # Separa os dois melhores indivíduos para serem os pais
-    pai1 = menores[0][1]
-    pai2 = menores[1][1]
     print("Pai 1 gerado:\t", pai1)
     print("Pai 2 gerado:\t", pai2)
 
@@ -101,23 +107,23 @@ def cruzamento(pai1, pai2):
 
 
 def ler_arquivo():
-    
+
     with open("edgesbrasil58.tsp", "r") as objArq:
         distancias = {}
 
-        for i in range(1, 58): 
+        for i in range(1, 58):
             linha = objArq.readline()
-            lista = linha.split() 
+            lista = linha.split()
 
             for j in range(i + 1, 59):
                 if len(lista) > 0:
-                    peso = int(lista.pop(0)) 
+                    peso = int(lista.pop(0))
                 else:
                     print(f"Erro! linha {i} do arquivo não possui elementos suficientes")
                     exit()
                 distancias[(i, j)] = peso
                 distancias[(j, i)] = peso
-                
+
     return distancias
 
 
@@ -132,7 +138,7 @@ def custoCaminho(permutacao, dicDistancias):
         else:
             print(f"Erro! ({a},{b}) não existe no dicionario!")
             exit()
-            
+
     # Fechando o ciclo (última cidade voltando para a primeira)
     soma += dicDistancias[(permutacao[-1], permutacao[0])]
     return soma
