@@ -60,33 +60,46 @@ def main():
     # Instanciando a população como um objeto
     populacao = Populacao(tamanho=100, qtde_cidades=58)
 
-    numero_geracoes = 1_000
-    taxa_mutacao = 0.05
+    numero_geracoes = 8_000
+    taxa_mutacao = 0.1
 
     for geracao in range(numero_geracoes):
         populacao.avaliar(dicDistancias)
 
-        # 2. ELITISMO: os 2 melhores sobrevivem intactos
-        melhores = populacao.obter_dois_melhores()
-        melhor_custo = melhores[0][0]
-        nova_geracao = [melhores[0][1], melhores[1][1]]
+        melhor_custo = populacao.obter_dois_melhores()[0][0]
 
-        # 3. Preenche o resto com filhos dos pais selecionados por torneio
-        while len(nova_geracao) < populacao.tamanho:
+        # Gera filhos a partir da população atual
+        filhos = []
+        while len(filhos) < populacao.tamanho:
             pai1, pai2 = populacao.selecionar_pais()
 
-            # Realiza o cruzamento Order-1
             filho1, filho2 = cruzamento(pai1, pai2)
 
-            # Realiza a mutação
             filho1 = mutacao(filho1, taxa_mutacao)
             filho2 = mutacao(filho2, taxa_mutacao)
 
-            nova_geracao.append(filho1)
-            if len(nova_geracao) < populacao.tamanho:
-                nova_geracao.append(filho2)
+            filhos.append(filho1)
+            if len(filhos) < populacao.tamanho:
+                filhos.append(filho2)
 
-        # 4. A nova geração SUBSTITUI a antiga
+        # Avalia os filhos antes de misturar
+        for filho in filhos:
+            custo = custoCaminho(filho, dicDistancias)
+            filho.fitness.values = (custo,)
+
+        # Mistura pais + filhos
+        pool = populacao.individuos + filhos
+
+        # Elitismo: garante o melhor indivíduo do pool
+        melhor_do_pool = min(pool, key=lambda ind: ind.fitness.values[0])
+        nova_geracao = [melhor_do_pool]
+        pool.remove(melhor_do_pool)
+
+        # Completa com torneio sobre o pool
+        nova_geracao.extend(
+            tools.selTournament(pool, k=populacao.tamanho - 1, tournsize=2)
+        )
+
         populacao.individuos = nova_geracao
 
         print(f"Geração {geracao:4d} | Melhor custo: {melhor_custo}")
